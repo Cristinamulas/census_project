@@ -21,6 +21,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier 
+from sklearn.model_selection import GridSearchCV
+
 
 
 def summary_table(data):
@@ -50,11 +52,13 @@ def adjust_data_types(data):
 def find_placeholders_with_percentages(data):
     
     '''Input is a Pandas DataFrame and return the percentage of placeholers in a field '''
-    
+    container = []
     for col in data.columns:
         for val, percentage in data[col].value_counts(normalize = True).iteritems():
-            if val in[' ?', ' NA', ' na', ' No value']: 
-                print(f'The {col} field contains this placeholder{val} with a percentage of {percentage} % ')
+            if val in[' ?', ' NA', ' Not in universe', " Not universe or children"]: 
+                container.append({'column_name': col,'placeholder': val,'percentage':  percentage})
+    return pd.DataFrame(container).sort_values(by='percentage', ascending=False)
+
                 
 def remove_duplicated_values(data, type_of_dataset):
     
@@ -119,7 +123,11 @@ def histogram_plot_continues_or_categorical_columns(data, continues):
             fig.show()
 
     
-
+def frequencies_fields(data):
+    '''it takes a df and return value_counts for all the features'''
+    for col in data.columns:
+        print(data[col].value_counts())
+        
 def encoding_categorical_fields(data):
     categorical_columns = (data.select_dtypes(['object']).columns)
     for col in categorical_columns:
@@ -134,6 +142,7 @@ def normalizad_continues_features(data):
 
 def plot_confusion_matix(x ,y ,classifier):
     """ it plots a confusion matrix """
+    cm = confusion_matrix(x, y)
     ax = sns.heatmap(cm, xticklabels='PN', yticklabels='PN', annot=True, square=True, cmap='Blues')
     ax.set_xlabel('Actual')
     ax.set_ylabel('Predicted')
@@ -148,12 +157,37 @@ def metrix_classifier(x , y):
 #     print("F1 Score: {}".format(f1_score(x, y)))
     print(classification_report(x,  y)) # maybe remove this
     
-def classifier(model_name, x_train_set, y_train_set,  x_test_set, y_test_set, classifier_name):
+def classifier(model_name, dataset, x_train_set, y_train_set,  x_test_set, y_test_set, classifier_name, importance):
     
     model = model_name()
     model_train = model.fit(x_train_set, y_train_set)
     y_prediction = model.predict(x_test_set)
     metrix_classifier(y_test_set, y_prediction)
     plot_confusion_matix(y_test_set,y_prediction,classifier_name)
+    
+    if importance == True:
 
+        importance_plot =pd.Series(model.feature_importances_,index = dataset.columns).nlargest(5).plot(kind='barh',title= f'Top 5 Fields Importance of {classifier_name}')
+        return importance_plot
+
+def grid_search_classifier(model, parameters_grid, X_train, y_train, X_test, y_test, classifier_name, type_score= None):
+    
+    """Input is a model classifier, parameters, data divideed into traing and test, the model name and the type 
+    of score [accuracy,precission,recall]
+        Return the best parameters of the classifier,
+        the best score,
+        a confussion matrix and
+        classification report.
+        
+    """
+    
+    grid_search = GridSearchCV(model, parameters_grid, scoring = type_score, n_jobs=1, refit=True, cv=5, verbose=0)
+    grid_search.fit(X_train, y_train)
+    print(f'The best parameters for this model are : {grid_search.best_params_}')
+    best = grid_search.best_score_
+    print(f'The best score for this model is {round(best,3)}')
+#     print(f'The scores for the training set are {clf.grid_scores_}')
+    y_pred = grid_search.predict(X_test)
+    metrix_classifier(y_test, y_pred)
+    plot_confusion_matix(y_test,y_pred,classifier_name)
     
