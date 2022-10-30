@@ -69,12 +69,15 @@ def remove_duplicated_values(data, type_of_dataset):
      
      
 def box_plot_continues_fields(input_value, my_title):
+    
+    """ Input is a Pandas DataFrame and an string. Return a box plot"""
     fig = px.box(input_value, title= my_title)
     fig.update_layout(autosize=False,width=800,height=800)
     fig.show()
    
         
 def histogram_plot_continues_or_categorical_columns(data, continues):
+    
     
     if continues == True:
         continues_columns = data.select_dtypes(['int64']).columns
@@ -131,12 +134,11 @@ def normalizad_continues_features(data):
 
 def plot_confusion_matix(x ,y ,classifier):
     """ it plots a confusion matrix """
-    cm = confusion_matrix(x, y)
-    ax= plt.subplot()
-    sns.heatmap(cm, annot=True,fmt='g', ax = ax)
-    ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels') 
+    ax = sns.heatmap(cm, xticklabels='PN', yticklabels='PN', annot=True, square=True, cmap='Blues')
+    ax.set_xlabel('Actual')
+    ax.set_ylabel('Predicted')
     ax.set_title('Confusion Matrix ' + classifier)
-    ax.xaxis.set_ticklabels(['Fail', 'Pass']); ax.yaxis.set_ticklabels(['Fail', 'Pass']) ## CHANGE THIS
+    plt.show()
     
 def metrix_classifier(x , y):
     """ calculated the accuracy and print out accuracy and classification report"""
