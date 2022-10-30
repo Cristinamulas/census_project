@@ -24,6 +24,9 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 def summary_table(data):
+    
+    """Input is a Pandas DataFrame and return a Pandas DataFrame with unique values, number of null values, data types for each of the fields in the Dataframe"""
+    
     summary_col_map = {'index':'field_name',0:'data_type',1:'number_unique_values',2:'number_null_values'}
     data_summary = pd.concat([data.dtypes,data.nunique(), data.isnull().sum(axis = 0)],axis=1).reset_index().rename(mapper = summary_col_map, axis =1)
     print(f'The train dataset contains {data.shape[0]} rows and {data.shape[1]} fields after removing instance_weight field')
@@ -32,6 +35,9 @@ def summary_table(data):
     return data_summary
 
 def adjust_data_types(data):
+    
+    """Input is a Pandas DataFrame and return a Pandas DataFrame with the selected fields converted to continues data type"""
+    
     number_continues_fields = len(data.select_dtypes(['int64']).columns)
     if number_continues_fields >= 6:
         data = data.astype({'detailed_industry_code':str,'detailed_occupation_code':str , 'own_business_or_self_employed':str,
@@ -42,13 +48,17 @@ def adjust_data_types(data):
         print(f'The number of continues fields is {len(data.select_dtypes(["int64"]).columns)}')
         
 def find_placeholders_with_percentages(data):
-    '''it takes a df and return the name of the column, the placeholder and the percentage '''
+    
+    '''Input is a Pandas DataFrame and return the percentage of placeholers in a field '''
+    
     for col in data.columns:
         for val, percentage in data[col].value_counts(normalize = True).iteritems():
             if val in[' ?', ' NA', ' na', ' No value']: 
                 print(f'The {col} field contains this placeholder{val} with a percentage of {percentage} % ')
                 
 def remove_duplicated_values(data, type_of_dataset):
+    
+    """Input is a Pandas DataFrame and the type od a dataset and return a Pandas DataFrame with out duplicated values"""
     
     number_duplicated_values = len(data[data.duplicated(keep="first")])
     print(f'Percentage of duplicated values in the {type_of_dataset} is {number_duplicated_values/data.shape[0]}')
